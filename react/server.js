@@ -42,15 +42,12 @@ app.use("*all", async (req, res) => {
     /** @type {import('./src/entry-server.js').render} */
     let render;
     if (!isProduction) {
-      console.log("DEV");
       // Always read fresh template in development
       template = await fs.readFile("./index.html", "utf-8");
       template = await vite.transformIndexHtml(url, template);
       // TODO: Load the server entry module and get the render function
       render = (await vite.ssrLoadModule("./src/entry-server.jsx")).render;
-      console.log("RENDER", render);
     } else {
-      console.log("PROD");
       template = templateHtml;
       // TODO: Import the built server entry module and get the render function
       // Hint: Use a dynamic import() to load the built server entry from ./dist/server/
@@ -59,8 +56,12 @@ app.use("*all", async (req, res) => {
 
     const rendered = render(url);
 
+    console.log(rendered);
+
     // TODO: Replace the placeholders in the HTML template with the rendered content
-    const html = template;
+    const html = template
+      .replace("<!--app-body-->", rendered.html)
+      .replace("<!--app-head-->", "");
 
     res.status(200).set({ "Content-Type": "text/html" }).send(html);
   } catch (e) {
